@@ -12,6 +12,11 @@ provider "azurerm" {
   features {}
 }
 
+variable "rgname" {
+  type = string
+  default = "rgfromterrcloud"
+  }
+
 resource "random_string" "random" {
   length           = 5
   special          = false
