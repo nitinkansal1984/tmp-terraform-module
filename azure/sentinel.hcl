@@ -15,6 +15,6 @@ policy "restrict-vm-size" {
 }
 
 policy "allowed-terraform-tags" {
-    enforcement_level = "soft-mandatory"
+    enforcement_level = "hard-mandatory"
 }
 
