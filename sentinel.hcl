@@ -1,38 +1,43 @@
 # This policy uses the Sentinel tfplan/v2 import to require that
-# specified Azure resources have all mandatory tags
+# all Azure VMs have a source image id that matches a regex expression
 
 # Import common-functions/tfplan-functions/tfplan-functions.sentinel
 # with alias "plan"
 import "tfplan-functions" as plan
 
-# Import azure-functions/azure-functions.sentinel
-# with alias "azure"
-import "azure-functions" as azure
+# Image ID Regex
+# Include "null" to allow missing or computed values
+image_id_regex = "^(/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/(.*)/providers/Microsoft.Compute/images/(.*)|null)$"
 
-# List of Azure resources that are required to have name/value tags.
-param resource_types default [
-  "azurerm_resource_group",
-  "azurerm_virtual_machine",
-  "azurerm_linux_virtual_machine",
-  "azurerm_windows_virtual_machine",
-  "azurerm_virtual_network",
-]
+# Get all Azure VMs using azurerm_virtual_machine
+allAzureVMs = plan.find_resources("azurerm_virtual_machine")
 
-# List of mandatory tags
-param mandatory_tags default ["environment"]
-
-# Get all Azure Resources with standard tags
-allAzureResourcesWithStandardTags =
-                        azure.find_resources_with_standard_tags(resource_types)
-
-# Filter to Azure resources with violations using azurerm_virtual_machine
+# Filter to Azure VMs with violations that use azurerm_virtual_machine
 # Warnings will be printed for all violations since the last parameter is true
-violatingAzureResources =
-      plan.filter_attribute_not_contains_list(allAzureResourcesWithStandardTags,
-                    "tags", mandatory_tags, true)
+violatingAzureVMs = plan.filter_attribute_does_not_match_regex(allAzureVMs,
+                    "storage_image_reference.0.id", image_id_regex, true)
 
+# Get all Azure VMs using azurerm_windows_virtual_machine
+allAzureWindowsVMs = plan.find_resources("azurerm_windows_virtual_machine")
+
+# Filter to Azure VMs with violations that use azurerm_windows_virtual_machine
+# Warnings will be printed for all violations since the last parameter is true
+violatingAzureWindowsVMs = plan.filter_attribute_does_not_match_regex(allAzureWindowsVMs,
+                    "source_image_id", image_id_regex, true)
+
+# Get all Azure VMs using azurerm_linux_virtual_machine
+allAzureLinuxVMs = plan.find_resources("azurerm_linux_virtual_machine")
+
+# Filter to Azure VMs with violations that use azurerm_linux_virtual_machine
+# Warnings will be printed for all violations since the last parameter is true
+violatingAzureLinuxVMs = plan.filter_attribute_does_not_match_regex(allAzureLinuxVMs,
+                    "source_image_id", image_id_regex, true)
 
 # Main rule
+violations = length(violatingAzureVMs["messages"]) +
+             length(violatingAzureWindowsVMs["messages"]) +
+             length(violatingAzureLinuxVMs["messages"])
+
 main = rule {
-  length(violatingAzureResources["messages"]) is 0
+  violations is 0
 }
