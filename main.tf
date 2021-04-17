@@ -27,7 +27,7 @@ resource "azurerm_resource_group" "example" {
   name     = var.rgname
   location = "West Europe"
   tags = {
-    environment = "dev"
+    environ = "dev"
     }
 }
 
