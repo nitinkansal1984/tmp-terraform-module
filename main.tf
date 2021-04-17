@@ -31,7 +31,7 @@ resource "azurerm_resource_group" "example" {
     }
 }
 
-/*
+
 resource "azurerm_storage_account" "example" {
   name                     = "storageaccount${random_string.random.result}"
   resource_group_name      = azurerm_resource_group.example.name
@@ -48,4 +48,4 @@ resource "azurerm_storage_account" "example" {
 output "storage_account" {
   value = azurerm_storage_account.example.name
  }
-*/
+
